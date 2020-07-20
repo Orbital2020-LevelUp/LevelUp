@@ -18,16 +18,28 @@
         android:background="@color/colorPrimary"
         app:menu="@menu/occasions_top_menu" />
 
+    <include layout="@layout/activity_main"/>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerview"
-        android:layout_width="match_parent"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swiperefreshlayoutjios"
         android:layout_height="match_parent"
-        android:layout_below="@+id/jios_toolbar"
-        android:layout_alignBottom="@+id/nav_view"
-        android:background="@android:color/darker_gray"
-        android:padding="4dp"
-        android:scrollbars="vertical" />
+        android:layout_width="match_parent"
+        android:layout_marginBottom="56dp"
+        android:layout_below="@id/jios_toolbar">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/jios_toolbar"
+            android:layout_alignBottom="@+id/nav_view"
+            android:background="@android:color/darker_gray"
+            android:padding="4dp"
+            android:layout_marginBottom="56dp"
+            android:scrollbars="vertical" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
 
     <LinearLayout
         android:id="@+id/ly_bar_bottom"
@@ -47,7 +59,7 @@
             android:layout_margin="28dp"
             android:elevation="6dp"
             android:src="@drawable/ic_add_white_24dp"
-            app:backgroundTint="@color/colorAccent" />
+            app:backgroundTint="@color/colorPrimary" />
     </LinearLayout>
 
 </RelativeLayout>

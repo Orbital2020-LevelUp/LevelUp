@@ -5,6 +5,7 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -16,9 +17,12 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 
 import com.MainActivity;
+import com.example.LevelUp.ui.events.EventsFragment;
 import com.example.tryone.R;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -44,11 +48,12 @@ public class EventsAdder extends AppCompatActivity implements TimePickerDialog.O
     Uri currentUri;
     private int hourOfDay;
     private int minute;
+    boolean validDate;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.occasion_adder);
+        setContentView(R.layout.events_adder);
         currentUri = getIntent().getData();
 
         mEventTitle = findViewById(R.id.event_title);
@@ -82,19 +87,42 @@ public class EventsAdder extends AppCompatActivity implements TimePickerDialog.O
         mSaveJio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EventsItem EventsItem = null;
+                EventsItem eventsItem = null;
+                String key = mDatabaseReference.push().getKey();
+                String eventCreatorUID = MainActivity.currUser.getId();
                 try {
-                    EventsItem = new EventsItem(R.drawable.fui_ic_twitter_bird_white_24dp,
+                    eventsItem = new EventsItem(key, eventCreatorUID,
                             df.parse((String) mDateSelected.getText()), (String) mTimeSelected.getText(),
                             hourOfDay, minute, mEventLocation.getText().toString(),
                             mEventTitle.getText().toString(), mEventDescription.getText().toString());
+                    // Toast.makeText(EventsAdder.this, key, Toast.LENGTH_SHORT).show();
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                mDatabaseReference.push().setValue(EventsItem);
-                Toast.makeText(EventsAdder.this, "Jio saved successfully", Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(EventsAdder.this, MainActivity.class);
-                startActivity(intent);
+                boolean factors = !mEventLocation.getText().toString().equals("")
+                        && !mEventTitle.getText().toString().equals("")
+                        && !mDateSelected.getText().toString().equals("")
+                        && !mTimeSelected.getText().toString().equals("")
+                        && !mTimeSelected.getText().toString().equals("No Time Selected")
+                        && !mDateSelected.getText().toString().equals("No Date Selected");
+                try {
+                    validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM).format(Calendar.getInstance().getTime()))
+                            .compareTo(df.parse(mDateSelected.getText().toString())) > 0;
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                if (validDate) {
+                    Toast.makeText(EventsAdder.this, "Date selected cannot be before current date", Toast.LENGTH_LONG).show();
+                } else if (!factors) {
+                    Toast.makeText(EventsAdder.this, "Please check all fields and try again", Toast.LENGTH_LONG).show();
+                } else if (factors) {
+                    mDatabaseReference.child(key).setValue(eventsItem);
+                    Toast.makeText(EventsAdder.this, "Event saved successfully", Toast.LENGTH_LONG).show();
+
+                    EventsFragment.setRefresh(true);
+                    onBackPressed();
+
+                }
             }
         });
     }
@@ -106,6 +134,7 @@ public class EventsAdder extends AppCompatActivity implements TimePickerDialog.O
         c.set(Calendar.MONTH, month);
         c.set(Calendar.DAY_OF_MONTH, dayOfMonth);
         String currentDateString = DateFormat.getDateInstance(DateFormat.MEDIUM).format(c.getTime());
+        // Toast.makeText(this, currentDateString, Toast.LENGTH_SHORT).show();
         mDateSelected.setText(currentDateString);
     }
 

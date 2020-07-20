@@ -1,5 +1,6 @@
 package com.Jios.LevelUp.ui.jios;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
 
 import com.MainActivity;
+import com.example.LevelUp.ui.jios.JiosFragment;
 import com.example.tryone.R;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -44,11 +46,12 @@ public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnT
     Uri currentUri;
     private int hourOfDay;
     private int minute;
+    boolean validDate;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.occasion_adder);
+        setContentView(R.layout.jios_adder);
         currentUri = getIntent().getData();
 
         mEventTitle = findViewById(R.id.event_title);
@@ -83,18 +86,41 @@ public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnT
             @Override
             public void onClick(View v) {
                 JiosItem jiosItem = null;
+                String key = mDatabaseReference.push().getKey();
+                String jioCreatorUID = MainActivity.currUser.getId();
                 try {
-                    jiosItem = new JiosItem(R.drawable.fui_ic_twitter_bird_white_24dp,
+                    jiosItem = new JiosItem(key, jioCreatorUID,
                             df.parse((String) mDateSelected.getText()), (String) mTimeSelected.getText(),
                             hourOfDay, minute, mEventLocation.getText().toString(),
                             mEventTitle.getText().toString(), mEventDescription.getText().toString());
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                mDatabaseReference.push().setValue(jiosItem);
-                Toast.makeText(JiosAdder.this, "Jio saved successfully", Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(JiosAdder.this, MainActivity.class);
-                startActivity(intent);
+                boolean factors = !mEventLocation.getText().toString().equals("")
+                        && !mEventTitle.getText().toString().equals("")
+                        && !mDateSelected.getText().toString().equals("")
+                        && !mTimeSelected.getText().toString().equals("")
+                        && !mTimeSelected.getText().toString().equals("No Time Selected")
+                        && !mDateSelected.getText().toString().equals("No Date Selected");
+                try {
+                    validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM).format(Calendar.getInstance().getTime()))
+                            .compareTo(df.parse(mDateSelected.getText().toString())) > 0;
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                if (validDate) {
+                    Toast.makeText(JiosAdder.this, "Date selected cannot be before current date", Toast.LENGTH_LONG).show();
+                } else if (!factors) {
+                    Toast.makeText(JiosAdder.this, "Please check all fields and try again", Toast.LENGTH_LONG).show();
+                } else if (factors) {
+                    mDatabaseReference.child(key).setValue(jiosItem);
+                    Toast.makeText(JiosAdder.this, "Jio saved successfully", Toast.LENGTH_LONG).show();
+
+                    JiosFragment.setRefresh(true);
+                    onBackPressed();
+                    // Intent intent = new Intent(JiosAdder.this, MainActivity.class);
+                    // startActivity(intent);
+                }
             }
         });
     }
