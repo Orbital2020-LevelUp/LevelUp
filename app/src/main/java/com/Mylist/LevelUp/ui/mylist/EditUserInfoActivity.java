@@ -130,9 +130,8 @@ public class EditUserInfoActivity extends AppCompatActivity implements AdapterVi
             @Override
             public void onClick(View v) {
                 // Open Gallery
-                Intent openGalleryIntent = new Intent();
-                openGalleryIntent.setType("image/*");
-                openGalleryIntent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+                Intent openGalleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                openGalleryIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
                 startActivityForResult(openGalleryIntent, PICK_IMAGE_REQUEST);
             }
         });
@@ -141,9 +140,8 @@ public class EditUserInfoActivity extends AppCompatActivity implements AdapterVi
             @Override
             public void onClick(View v) {
                 // Open Gallery
-                Intent openGalleryIntent = new Intent();
-                openGalleryIntent.setType("image/*");
-                openGalleryIntent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+                Intent openGalleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                openGalleryIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
                 startActivityForResult(openGalleryIntent, PICK_IMAGE_REQUEST);
             }
         });

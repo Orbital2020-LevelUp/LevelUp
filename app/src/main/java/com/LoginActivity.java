@@ -34,6 +34,9 @@ import com.google.firebase.storage.UploadTask;
 import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+
+    private static final int PICK_IMAGE_REQUEST = 1;
+
     // For Login
     private EditText editTextName;
     private FirebaseUser fbUser;
@@ -68,9 +71,9 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
             @Override
             public void onClick(View v) {
                 // Open Gallery
-                Intent openGalleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(openGalleryIntent, 1000);
-
+                Intent openGalleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                openGalleryIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                startActivityForResult(openGalleryIntent, PICK_IMAGE_REQUEST);
             }
         });
 
@@ -109,7 +112,7 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
 
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1000) { // means data is the image selected
+        if (requestCode == PICK_IMAGE_REQUEST) { // means data is the image selected
             if (resultCode == Activity.RESULT_OK) {
                 Uri imageUri = data.getData();
                 setDP.setImageURI(imageUri);
