@@ -26,6 +26,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener,
@@ -47,6 +48,8 @@ public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnT
     private int hourOfDay;
     private int minute;
     boolean validDate;
+    boolean validTime = false;
+    boolean dateIsSame;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -96,21 +99,37 @@ public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnT
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                boolean factors = !mEventLocation.getText().toString().equals("")
-                        && !mEventTitle.getText().toString().equals("")
-                        && !mDateSelected.getText().toString().equals("")
-                        && !mTimeSelected.getText().toString().equals("")
-                        && !mTimeSelected.getText().toString().equals("No Time Selected")
-                        && !mDateSelected.getText().toString().equals("No Date Selected");
+
                 try {
                     validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM).format(Calendar.getInstance().getTime()))
                             .compareTo(df.parse(mDateSelected.getText().toString())) > 0;
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                if (validDate) {
-                    Toast.makeText(JiosAdder.this, "Date selected cannot be before current date", Toast.LENGTH_LONG).show();
-                } else if (!factors) {
+                SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+                String str = sdf.format(Calendar.getInstance().getTime());
+                int intCurrentTime = Integer.parseInt(str);
+                try {
+                    validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM).format(Calendar.getInstance().getTime()))
+                            .compareTo(df.parse(mDateSelected.getText().toString())) > 0;
+                    dateIsSame = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM).format(Calendar.getInstance().getTime()))
+                            .compareTo(df.parse(mDateSelected.getText().toString())) == 0;
+                    if (!mTimeSelected.getText().toString().equals("No Time Selected") && dateIsSame) {
+                        validTime = intCurrentTime > Integer.parseInt(mTimeSelected.getText().toString());
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                boolean factors = !mEventLocation.getText().toString().equals("")
+                        && !mEventTitle.getText().toString().equals("")
+                        && !mEventDescription.getText().toString().equals("")
+                        && !mTimeSelected.getText().toString().equals("No Time Selected")
+                        && !mDateSelected.getText().toString().equals("No Date Selected")
+                        //validDate must be an incorrect date
+                        && !validDate
+                        //validTime must be an incorrect time
+                        && !validTime;
+                if (!factors) {
                     Toast.makeText(JiosAdder.this, "Please check all fields and try again", Toast.LENGTH_LONG).show();
                 } else if (factors) {
                     mDatabaseReference.child(key).setValue(jiosItem);
