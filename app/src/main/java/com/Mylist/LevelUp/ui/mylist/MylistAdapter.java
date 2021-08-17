@@ -1,28 +1,12 @@
 package com.Mylist.LevelUp.ui.mylist;
 
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Handler;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CompoundButton;
-import android.widget.Filter;
-import android.widget.Filterable;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 import com.ActivityOccasionItem;
 import com.Events.LevelUp.ui.events.EventPage;
-import com.Jios.LevelUp.ui.jios.JiosItem;
 import com.Jios.LevelUp.ui.jios.JiosPage;
 import com.LikeOccasionItem;
 import com.MainActivity;
@@ -30,7 +14,6 @@ import com.UserItem;
 import com.UserProfile;
 import com.example.LevelUp.ui.Occasion;
 import com.example.tryone.R;
-import com.firebase.ui.auth.data.model.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -43,10 +26,22 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.Filter;
+import android.widget.Filterable;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class MylistAdapter extends RecyclerView.Adapter<MylistAdapter.MylistViewHolder> implements Filterable {
     // ArrayList is passed in from Occasion.java
@@ -275,7 +270,7 @@ public class MylistAdapter extends RecyclerView.Adapter<MylistAdapter.MylistView
     @Override
     public void onBindViewHolder(@NonNull MylistAdapter.MylistViewHolder holder, final int position) {
         final Occasion currentItem = mylistList.get(position);
-        UserItem user = MainActivity.currUser;
+        UserItem user = MainActivity.getCurrUser();
         final String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
         final String occID = currentItem.getOccasionID();
         final DatabaseReference activityJioRef = firebaseDatabase.getReference("ActivityJio");
@@ -382,12 +377,12 @@ public class MylistAdapter extends RecyclerView.Adapter<MylistAdapter.MylistView
                     }
                 });
 
-                if (MainActivity.mJioIDs.contains(occID)) {
-                    MainActivity.mJioIDs.remove(occID);
+                if (MainActivity.getJioIds().contains(occID)) {
+                    MainActivity.getJioIds().remove(occID);
                 }
 
-                if (MainActivity.mEventIDs.contains(occID)) {
-                    MainActivity.mEventIDs.remove(occID);
+                if (MainActivity.getEventIDs().contains(occID)) {
+                    MainActivity.getEventIDs().remove(occID);
                 }
 
 
@@ -416,7 +411,7 @@ public class MylistAdapter extends RecyclerView.Adapter<MylistAdapter.MylistView
             }
         });
 
-        if (MainActivity.mLikeEventIDs.contains(occID) || MainActivity.mLikeJioIDs.contains(occID)) {
+        if (MainActivity.getLikeEventIDs().contains(occID) || MainActivity.getLikeJioIDs().contains(occID)) {
             viewHolder.likeButton.setBackgroundResource(R.drawable.ic_favorite_red_24dp);
             viewHolder.setLiked(true);
             viewHolder.likeButton.setChecked(true);
@@ -492,7 +487,7 @@ public class MylistAdapter extends RecyclerView.Adapter<MylistAdapter.MylistView
                         jioRef.child(occID).child("numLikes").setValue(currLikes - 1);
                         viewHolder.setNumLikes(currLikes - 1);
 
-                        MainActivity.mLikeJioIDs.remove(occID);
+                        MainActivity.getLikeJioIDs().remove(occID);
                     } else {
                         // delete item from LikeEvent
                         final DatabaseReference mLikeEventRef = firebaseDatabase.getReference("LikeEvent");
@@ -520,7 +515,7 @@ public class MylistAdapter extends RecyclerView.Adapter<MylistAdapter.MylistView
                         eventRef.child(occID).child("numLikes").setValue(currLikes - 1);
                         viewHolder.setNumLikes(currLikes - 1);
 
-                        MainActivity.mLikeEventIDs.remove(occID);
+                        MainActivity.getLikeEventIDs().remove(occID);
                     }
                 }
             }

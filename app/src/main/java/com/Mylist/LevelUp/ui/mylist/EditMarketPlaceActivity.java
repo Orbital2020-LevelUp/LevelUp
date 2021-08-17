@@ -1,30 +1,7 @@
 package com.Mylist.LevelUp.ui.mylist;
 
-import android.content.ContentResolver;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-import android.view.View;
-import android.webkit.MimeTypeMap;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.Events.LevelUp.ui.events.EventsItem;
-import com.MainActivity;
-import com.Mktplace.LevelUp.ui.mktplace.MktplaceAdder;
 import com.Mktplace.LevelUp.ui.mktplace.MktplaceItem;
 import com.bumptech.glide.Glide;
-import com.example.LevelUp.ui.mktplace.MktplaceFragment;
 import com.example.tryone.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -40,7 +17,27 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 
+import android.content.ContentResolver;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
+import android.webkit.MimeTypeMap;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 public class EditMarketPlaceActivity extends AppCompatActivity {
+    private static final int PICK_IMAGE_REQUEST = 1;
+
     private Button saveBtn;
     private Button changeImageBtn;
     private ToggleButton deleteBtn;
@@ -49,22 +46,21 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
     private String updatedDescription;
 
     private String mktplaceID;
-    private String creatorUID;
+    private String creatorUid;
     private String imageurl;
 
-    private ImageView mImageView;
+    private ImageView imageView;
     private TextView titleTv;
     private TextView locationTv;
     private TextView descTv;
     private ProgressBar progressBar;
 
-    private StorageReference mStorageRef;
-    private DatabaseReference mDatabaseRef;
+    private StorageReference storageRef;
+    private DatabaseReference databaseRef;
 
     private StorageTask mUploadTask;
     private Uri mImageUri;
 
-    private static final int PICK_IMAGE_REQUEST = 1;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         setContentView(R.layout.marketplace_edit);
@@ -75,7 +71,7 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
         final String title = intent.getStringExtra("title");
         final String location = intent.getStringExtra("location");
         final String description = intent.getStringExtra("description");
-        creatorUID = intent.getStringExtra("creatorUID");
+        creatorUid = intent.getStringExtra("creatorUID");
 
         final TextView titleTextView = findViewById(R.id.listing_title);
         titleTv = titleTextView;
@@ -83,21 +79,21 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
         locationTv = locationTextView;
         final TextView descriptionTextView = findViewById(R.id.listing_description);
         descTv = descriptionTextView;
-        mImageView = findViewById(R.id.selected_image);
+        imageView = findViewById(R.id.selected_image);
         progressBar = findViewById(R.id.progress_bar);
 
         // Setting existing values
         titleTextView.setText(title);
         locationTextView.setText(location);
         descriptionTextView.setText(description);
-        Glide.with(mImageView.getContext()).load(imageurl).into(mImageView);
+        Glide.with(imageView.getContext()).load(imageurl).into(imageView);
 
         saveBtn = findViewById(R.id.save_changes_btn);
         changeImageBtn = findViewById(R.id.photo_selector);
         deleteBtn = findViewById(R.id.delete_btn);
-        mStorageRef = FirebaseStorage.getInstance().getReference("mktplace uploads");
-        mDatabaseRef = FirebaseDatabase.getInstance().getReference("mktplace uploads");
-        // final DatabaseReference mDatabaseReferenceMktplace = mDatabaseRef;
+        storageRef = FirebaseStorage.getInstance().getReference("mktplace uploads");
+        databaseRef = FirebaseDatabase.getInstance().getReference("mktplace uploads");
+        // final DatabaseReference mDatabaseReferenceMktplace = databaseRef;
 
         changeImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,33 +106,6 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 uploadFile();
-//                mDatabaseReferenceMktplace.addListenerForSingleValueEvent(new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-//                            MktplaceItem selected = snapshot.getValue(MktplaceItem.class);
-//                            String selectedMktPlaceID = selected.getMktPlaceID();
-//                            if (selectedMktPlaceID.equals(mktplaceID)) {
-//                                updatedLocationInfo = locationTextView.getText().toString().trim();
-//                                updatedTitle = titleTextView.getText().toString().trim();
-//                                updatedDescription = descriptionTextView.getText().toString().trim();
-//                                // image set ltr
-//                                MktplaceItem updatedItem = new MktplaceItem(mktplaceID, creatorUID,
-//                                        updatedTitle, imageurl, updatedLocationInfo, updatedDescription);
-//                                mDatabaseReferenceMktplace.child(mktplaceID).setValue(updatedItem);
-//                                Toast.makeText(EditMarketPlaceActivity.this, "Successfully Changed", Toast.LENGTH_SHORT).show();
-//                                MktplaceCreatedFragment.setRefresh(true);
-//                                finish();
-//                            }
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//                    }
-//                });
-
             }
         });
 
@@ -144,7 +113,7 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
         final Runnable myRun = new Runnable() {
             @Override
             public void run() {
-                mDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                databaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -152,7 +121,7 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
                             String selectedMktPlaceID = selected.getMktPlaceID();
                             if (selectedMktPlaceID.equals(mktplaceID)) {
                                 String key = snapshot.getKey();
-                                mDatabaseRef.child(key).removeValue();
+                                databaseRef.child(key).removeValue();
                                 MktplaceCreatedFragment.setRefresh(true);
                                 finish();
                             }
@@ -201,7 +170,7 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK
                 && data != null && data.getData() != null) {
             mImageUri = data.getData();
-            Glide.with(mImageView.getContext()).load(mImageUri).into(mImageView);
+            Glide.with(imageView.getContext()).load(mImageUri).into(imageView);
         }
     }
 
@@ -217,17 +186,17 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
                 && !titleTv.getText().toString().equals(""); // && !listingDescription.getText().toString().equals("");
 
         if (mImageUri == null && factors) {
-            MktplaceItem title = new MktplaceItem(0, mktplaceID, creatorUID, titleTv.getText().toString().trim(),
+            MktplaceItem title = new MktplaceItem(0, mktplaceID, creatorUid, titleTv.getText().toString().trim(),
                     imageurl,
                     locationTv.getText().toString().trim(),
                     descTv.getText().toString().trim());
-            mDatabaseRef.child(mktplaceID).setValue(title);
+            databaseRef.child(mktplaceID).setValue(title);
             Toast.makeText(EditMarketPlaceActivity.this, "Successfully Changed", Toast.LENGTH_SHORT).show();
             MktplaceCreatedFragment.setRefresh(true);
             finish();
 
         } else if (factors) {
-            StorageReference fileReference = mStorageRef.child(System.currentTimeMillis()
+            StorageReference fileReference = storageRef.child(System.currentTimeMillis()
                     + "." + getFileExtension(mImageUri));
             mUploadTask = fileReference.putFile(mImageUri)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -243,15 +212,14 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
                             Task<Uri> urlTask = taskSnapshot.getStorage().getDownloadUrl();
                             while (!urlTask.isSuccessful());
                             Uri downloadUrl = urlTask.getResult();
-                            MktplaceItem title = new MktplaceItem(0, mktplaceID, creatorUID, titleTv.getText().toString().trim(),
+                            MktplaceItem title = new MktplaceItem(0, mktplaceID, creatorUid,
+                                titleTv.getText().toString().trim(),
                                     downloadUrl.toString(),
                                     locationTv.getText().toString().trim(),
                                     descTv.getText().toString().trim());
-                            // String uploadId = mDatabaseRef.push().getKey();
-                            mDatabaseRef.child(mktplaceID).setValue(title);
-                            Toast.makeText(EditMarketPlaceActivity.this, "Successfully Changed", Toast.LENGTH_SHORT).show();
-//                            Intent intent = new Intent(MktplaceAdder.this, MainActivity.class);
-//                            startActivity(intent);
+                            databaseRef.child(mktplaceID).setValue(title);
+                            Toast.makeText(EditMarketPlaceActivity.this, "Successfully Changed",
+                                Toast.LENGTH_SHORT).show();
 
                             MktplaceCreatedFragment.setRefresh(true);
                             finish();
@@ -267,7 +235,8 @@ public class EditMarketPlaceActivity extends AppCompatActivity {
                     .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                            double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                            double progress = (100.0 * taskSnapshot.getBytesTransferred()
+                                / taskSnapshot.getTotalByteCount());
                             progressBar.setProgress((int) progress);
                         }
                     });

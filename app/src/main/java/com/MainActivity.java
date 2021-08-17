@@ -1,24 +1,19 @@
 package com;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
-
-import com.Mylist.LevelUp.ui.mylist.MylistAdapter;
 import com.example.LevelUp.ui.Occasion;
+import com.example.LevelUp.ui.dashboard.DashboardFragment;
 import com.example.LevelUp.ui.events.EventsFragment;
 import com.example.LevelUp.ui.jios.JiosFragment;
+import com.example.LevelUp.ui.mktplace.MktplaceFragment;
 import com.example.LevelUp.ui.mylist.MylistFragment;
 import com.example.tryone.R;
-import com.example.LevelUp.ui.dashboard.DashboardFragment;
-import com.example.LevelUp.ui.mktplace.MktplaceFragment;
-
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -27,51 +22,92 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
-import java.lang.reflect.Array;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-
 public class MainActivity extends AppCompatActivity {
     // For Login
-    public static FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthStateListener;
+    private static UserItem currUser;
+    private static FirebaseAuth auth;
+    // For User Information on MyList Fragment
+    private static String displayName;
+
+    private static String displayResidential;
+
+    private static String displayTelegram = "default";
+
+    private static long displayPhone = 0;
+
     private static final String TAG = "MainActivity";
 
-    public static UserItem currUser;
     private static String currUserProfilePicture;
-    private DatabaseReference mDatabaseReferenceUser;
+    private static final ArrayList<String> eventIDs = new ArrayList<>();
+    private static final ArrayList<String> jioIDs = new ArrayList<>();
 
-    // For User Information on MyList Fragment
-    public static String display_name;
-    public static String display_residential;
-    public static String display_telegram = "default";
-    public static long display_phone = 0;
+    private static final ArrayList<String> likeEventIDs = new ArrayList<>();
 
-    // For things in MyList
-    private FirebaseDatabase mFirebaseDatabase;
-    private DatabaseReference mDatabaseReferenceActivityEvent;
-    private DatabaseReference mDatabaseReferenceActivityJio;
-    private DatabaseReference mDatabaseReferenceLikeEvent;
-    private DatabaseReference mDatabaseReferenceLikeJio;
-    private DatabaseReference mDatabaseReferenceLikeMktplace;
+    private static final ArrayList<String> likeJioIDs = new ArrayList<>();
 
-    public static final ArrayList<String> mEventIDs = new ArrayList<>();
-    public static final ArrayList<String> mJioIDs = new ArrayList<>();
-
-    public static final ArrayList<String> mLikeEventIDs = new ArrayList<>();
-    public static final ArrayList<String> mLikeJioIDs = new ArrayList<>();
-    public static final ArrayList<String > mLikeMktplaceIDs = new ArrayList<>();
+    private static final ArrayList<String> likeMktplaceIDs = new ArrayList<>();
 
 
     private static final int RC_SIGN_IN = 1;
+    private DatabaseReference databaseReferenceUser;
+
+    private FirebaseAuth.AuthStateListener authStateListener;
+
+    // For things in MyList
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference databaseReferenceActivityEvent;
+    private DatabaseReference databaseReferenceActivityJio;
+    private DatabaseReference databaseReferenceLikeEvent;
+    private DatabaseReference databaseReferenceLikeJio;
+    private DatabaseReference databaseReferenceLikeMktplace;
+
+    private BottomNavigationView.OnNavigationItemSelectedListener navListener =
+        new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                Fragment selected = null;
+                String fragTag = null;
+
+                switch (item.getItemId()) {
+                case R.id.navigation_mktPlace:
+                    selected = new MktplaceFragment();
+                    fragTag = "MktplaceFragment";
+                    break;
+                case R.id.navigation_jios:
+                    selected = new JiosFragment();
+                    fragTag = "JiosFragment";
+                    break;
+                case R.id.navigation_dashboard:
+                    selected = new DashboardFragment();
+                    fragTag = "DashboardFragment";
+                    break;
+                case R.id.navigation_events:
+                    selected = new EventsFragment();
+                    fragTag = "EventsFragment";
+                    break;
+                case R.id.navigation_myList:
+                    selected = new MylistFragment();
+                    fragTag = "MylistFragment";
+                    break;
+                default:
+                }
+                getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.nav_host_fragment, selected, fragTag)
+                    .addToBackStack(fragTag)
+                    .commit();
+                return true;
+            }
+        };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,31 +128,25 @@ public class MainActivity extends AppCompatActivity {
         navView.setOnNavigationItemSelectedListener(navListener);
 
         initializeLogin();
-
-        // initializeMyList();
-
-        // Toast.makeText(MainActivity.this, mJioIDs.toString(), Toast.LENGTH_SHORT).show();
-
     }
 
     private void initializeMyList() {
-        // final String fbUIDFinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        final String fbUIDFinal = currUser.getId();
+        final String fbUidFinal = currUser.getId();
 
         // pulling activityevent with my userID
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
-        mDatabaseReferenceActivityEvent = mFirebaseDatabase.getReference().child("ActivityEvent");
-        mDatabaseReferenceActivityEvent.addValueEventListener(new ValueEventListener() {
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReferenceActivityEvent = firebaseDatabase.getReference().child("ActivityEvent");
+        databaseReferenceActivityEvent.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mEventIDs.clear();
+                eventIDs.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     try {
                         ActivityOccasionItem selected = snapshot.getValue(ActivityOccasionItem.class);
                         String selectedUserID = selected.getUserID();
-                        if (selectedUserID.equals(fbUIDFinal)) {
+                        if (selectedUserID.equals(fbUidFinal)) {
                             // it is my event so I add EventID into arraylist
-                            mEventIDs.add(selected.getOccasionID());
+                            eventIDs.add(selected.getOccasionID());
                         }
                     } catch (Exception e) {
                         System.out.println(e);
@@ -129,17 +159,17 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        mDatabaseReferenceActivityJio = mFirebaseDatabase.getReference().child("ActivityJio");
-        mDatabaseReferenceActivityJio.addValueEventListener(new ValueEventListener() {
+        databaseReferenceActivityJio = firebaseDatabase.getReference().child("ActivityJio");
+        databaseReferenceActivityJio.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mJioIDs.clear();
+                jioIDs.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     try {
                         ActivityOccasionItem selected = snapshot.getValue(ActivityOccasionItem.class);
                         String selectedUserID = selected.getUserID();
-                        if (selectedUserID.equals(fbUIDFinal)) {
-                            mJioIDs.add(selected.getOccasionID());
+                        if (selectedUserID.equals(fbUidFinal)) {
+                            jioIDs.add(selected.getOccasionID());
                         }
                     } catch (Exception e) {
                         System.out.println(e);
@@ -155,23 +185,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeMyLikes() {
-        // final String fbUIDFinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        final String fbUIDFinal = currUser.getId();
+        final String fbUidFinal = currUser.getId();
 
         // pulling activityevent with my userID
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
-        mDatabaseReferenceLikeEvent = mFirebaseDatabase.getReference().child("LikeEvent");
-        mDatabaseReferenceLikeEvent.addValueEventListener(new ValueEventListener() {
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReferenceLikeEvent = firebaseDatabase.getReference().child("LikeEvent");
+        databaseReferenceLikeEvent.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mLikeEventIDs.clear();
+                likeEventIDs.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     try {
                         LikeOccasionItem selected = snapshot.getValue(LikeOccasionItem.class);
                         String selectedUserID = selected.getUserID();
-                        if (selectedUserID.equals(fbUIDFinal)) {
+                        if (selectedUserID.equals(fbUidFinal)) {
                             // it is my LikeEvent so I add EventID into arraylist
-                            mLikeEventIDs.add(selected.getOccasionID());
+                            likeEventIDs.add(selected.getOccasionID());
                         }
                     } catch (Exception e) {
                         System.out.println(e);
@@ -184,17 +213,17 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        mDatabaseReferenceLikeJio = mFirebaseDatabase.getReference().child("LikeJio");
-        mDatabaseReferenceLikeJio.addValueEventListener(new ValueEventListener() {
+        databaseReferenceLikeJio = firebaseDatabase.getReference().child("LikeJio");
+        databaseReferenceLikeJio.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mLikeJioIDs.clear();
+                likeJioIDs.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     try {
                         LikeOccasionItem selected = snapshot.getValue(LikeOccasionItem.class);
                         String selectedUserID = selected.getUserID();
-                        if (selectedUserID.equals(fbUIDFinal)) {
-                            mLikeJioIDs.add(selected.getOccasionID());
+                        if (selectedUserID.equals(fbUidFinal)) {
+                            likeJioIDs.add(selected.getOccasionID());
                         }
                     } catch (Exception e) {
                         System.out.println(e);
@@ -207,17 +236,17 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        mDatabaseReferenceLikeMktplace = mFirebaseDatabase.getReference().child("LikeMktplace");
-        mDatabaseReferenceLikeMktplace.addValueEventListener(new ValueEventListener() {
+        databaseReferenceLikeMktplace = firebaseDatabase.getReference().child("LikeMktplace");
+        databaseReferenceLikeMktplace.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mLikeMktplaceIDs.clear();
+                likeMktplaceIDs.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     try {
                         LikeOccasionItem selected = snapshot.getValue(LikeOccasionItem.class);
                         String selectedUserID = selected.getUserID();
-                        if (selectedUserID.equals(fbUIDFinal)) {
-                            mLikeMktplaceIDs.add(selected.getOccasionID());
+                        if (selectedUserID.equals(fbUidFinal)) {
+                            likeMktplaceIDs.add(selected.getOccasionID());
                         }
                     } catch (Exception e) {
                         System.out.println(e);
@@ -233,16 +262,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeUser() {
-        final String fbUIDfinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        mDatabaseReferenceUser = mFirebaseDatabase.getReference().child("Users");
-        mDatabaseReferenceUser.addListenerForSingleValueEvent(new ValueEventListener() {
+        final String fbUidFinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        databaseReferenceUser = firebaseDatabase.getReference().child("Users");
+        databaseReferenceUser.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     try {
                         UserItem selected = snapshot.getValue(UserItem.class);
                         String id = selected.getId();
-                        if (fbUIDfinal.equals(id)) {
+                        if (fbUidFinal.equals(id)) {
                             currUser = selected;
                             currUser.setProfilePictureUri(currUserProfilePicture);
                             initializeMyList();
@@ -253,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println(e);
                     }
                 }
-                if (!existInFirebase()){
+                if (!existInFirebase()) {
                     // start registration of details
                     Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                     startActivity(intent);
@@ -268,24 +297,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeFirebase() {
-        if (mAuth == null) {
-            mAuth = FirebaseAuth.getInstance();
+        if (auth == null) {
+            auth = FirebaseAuth.getInstance();
         }
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
+        firebaseDatabase = FirebaseDatabase.getInstance();
     }
 
     private void initializeLogin() {
 
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
+        authStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
-                    //onSignedInInitialize(user.getDisplayName());
-                    // mReferenceUsers.setValue(user);
                     initializeUser();
                 } else { // first time sign in
-                    //onSignedOutCleanup();
                     startActivityForResult(
                             AuthUI.getInstance()
                                     .createSignInIntentBuilder()
@@ -295,52 +321,11 @@ public class MainActivity extends AppCompatActivity {
                                             new AuthUI.IdpConfig.EmailBuilder().build()))
                                     .build(),
                             RC_SIGN_IN);
-//                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-//                        startActivity(intent);
-
                 }
             }
         };
     }
 
-    private BottomNavigationView.OnNavigationItemSelectedListener navListener =
-            new BottomNavigationView.OnNavigationItemSelectedListener() {
-                @Override
-                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                    Fragment selected = null;
-                    String fragTag = null;
-
-                    switch (item.getItemId()) {
-                        case R.id.navigation_mktPlace:
-                            selected = new MktplaceFragment();
-                            fragTag = "MktplaceFragment";
-                            break;
-                        case R.id.navigation_jios:
-                            selected = new JiosFragment();
-                            fragTag = "JiosFragment";
-                            break;
-                        case R.id.navigation_dashboard:
-                            selected = new DashboardFragment();
-                            fragTag = "DashboardFragment";
-                            break;
-                        case R.id.navigation_events:
-                            // Toolbar eventsToolbar = (Toolbar) findViewById(R.id.events_toolbar);
-                            // setSupportActionBar(eventsToolbar);
-                            selected = new EventsFragment();
-                            fragTag = "EventsFragment";
-                            break;
-                        case R.id.navigation_myList:
-                            selected = new MylistFragment();
-                            fragTag = "MylistFragment";
-                            break;
-                    }
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.nav_host_fragment, selected, fragTag)
-                            .addToBackStack(fragTag)
-                            .commit();
-                    return true;
-                }
-            };
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -368,9 +353,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mAuth.addAuthStateListener(mAuthStateListener);
+        auth.addAuthStateListener(authStateListener);
     }
 
+    /**
+     * Sorts a given list of Occasion items by date and time
+     *
+     * @param list List of Occasion items to be sorted
+     */
     public static void sort(ArrayList<? extends Occasion> list) {
         Collections.sort(list, new Comparator<Occasion>() {
             @Override
@@ -397,7 +387,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mAuth.removeAuthStateListener(mAuthStateListener);
+        auth.removeAuthStateListener(authStateListener);
     }
 
     public static void setCurrUserProfilePicture(String currUserProfilePicture) {
@@ -407,4 +397,55 @@ public class MainActivity extends AppCompatActivity {
     public static UserItem getCurrentUser() {
         return currUser;
     }
+
+    public static String getDisplayName() {
+        return displayName;
+    }
+    public static void setDisplayName(String name) {
+        displayName = name;
+    }
+    public static String getDisplayResidential() {
+        return displayResidential;
+    }
+    public static void setDisplayResidential(String display) {
+        displayResidential = display;
+    }
+
+    public static String getDisplayTelegram() {
+        return displayTelegram;
+    }
+    public static void setDisplayTelegram(String display) {
+        displayTelegram = display;
+    }
+    public static long getDisplayPhone() {
+        return displayPhone;
+    }
+
+    public static void setDisplayPhone(long display) {
+        displayPhone = display;
+    }
+
+    public static UserItem getCurrUser() {
+        return currUser;
+    }
+
+    public static void setCurrUser(UserItem user) {
+        currUser = user;
+    }
+    public static ArrayList<String> getEventIDs() {
+        return eventIDs;
+    }
+    public static ArrayList<String> getJioIds() {
+        return jioIDs;
+    }
+    public static ArrayList<String> getLikeEventIDs() {
+        return likeEventIDs;
+    }
+    public static ArrayList<String> getLikeJioIDs() {
+        return likeJioIDs;
+    }
+    public static ArrayList<String> getLikeMktplaceIDs() {
+        return likeMktplaceIDs;
+    }
+
 }

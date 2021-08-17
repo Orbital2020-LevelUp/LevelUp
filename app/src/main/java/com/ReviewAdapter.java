@@ -1,15 +1,6 @@
 package com;
 
-import android.net.Uri;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
 
 import com.example.tryone.R;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -20,14 +11,20 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
+import android.net.Uri;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
-public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewViewHolder>{
+
+public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewViewHolder> {
 
     private ArrayList<ReviewItem> reviewList;
     private StorageReference profileStorageRef;
-    private FirebaseDatabase mFirebaseDatabase;
-    private DatabaseReference mUserRef;
 
     public static class ReviewViewHolder extends RecyclerView.ViewHolder {
         private ImageView profilePicture;
@@ -71,18 +68,18 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
     @Override
     public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
         ReviewItem currentItem = reviewList.get(position);
-        final ReviewViewHolder holder1 = holder;
+        final ReviewViewHolder viewHolder = holder;
         String reviewerID = currentItem.getUserID();
         StorageReference profileStorageRefIndiv = profileStorageRef.child(reviewerID);
         profileStorageRefIndiv.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
-                Picasso.get().load(uri).into(holder1.profilePicture);
+                Picasso.get().load(uri).into(viewHolder.profilePicture);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                holder1.profilePicture.setImageResource(R.drawable.fake_user_dp);
+                viewHolder.profilePicture.setImageResource(R.drawable.fake_user_dp);
             }
         });
         holder.reviewerName.setText(currentItem.getReviewerdisplayName());

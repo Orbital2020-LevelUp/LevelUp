@@ -1,12 +1,26 @@
 package com.Mylist.LevelUp.ui.mylist;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Locale;
+
+import com.Events.LevelUp.ui.events.DatePickerFragment;
+import com.Events.LevelUp.ui.events.EventsItem;
+import com.Events.LevelUp.ui.events.TimePickerFragment;
+import com.Jios.LevelUp.ui.jios.JiosItem;
+import com.example.tryone.R;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.EventLog;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -19,32 +33,15 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
 
-import com.Events.LevelUp.ui.events.DatePickerFragment;
-import com.Events.LevelUp.ui.events.EventsAdder;
-import com.Events.LevelUp.ui.events.EventsItem;
-import com.Events.LevelUp.ui.events.TimePickerFragment;
-import com.Jios.LevelUp.ui.jios.JiosItem;
-import com.example.LevelUp.ui.events.EventsFragment;
-import com.example.tryone.R;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.util.Calendar;
-import java.util.Locale;
-
 public class EditOccasionInfoActivity extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener,
         DatePickerDialog.OnDateSetListener, AdapterView.OnItemSelectedListener {
+    private static final String[] categories = {
+        "Arts", "Sports", "Talks", "Volunteering", "Food", "Others"};
     private ImageButton editDateBtn;
     private ImageButton editTimeBtn;
     private Button saveBtn;
@@ -54,9 +51,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
     private String occID;
     private String creatorID;
     private Spinner categorySpinner;
-    private FirebaseDatabase mFirebaseDatabase;
-
-    // public EventsItem(String eventID, String creatorID, Date dateInfo, String timeInfo, int hourOfDay, int minute, String locationInfo, String title, String description)
+    private FirebaseDatabase firebaseDatabase;
 
     private String updatedTimeInfo;
     private int updatedHourOfDay;
@@ -67,8 +62,6 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
     private int updatedCategory;
 
     private int category;
-    private static final String[] categories = {
-            "Arts", "Sports", "Talks", "Volunteering", "Food", "Others"};
 
     private boolean validDate;
 
@@ -89,7 +82,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
         occID = intent.getStringExtra("occID");
         creatorID = intent.getStringExtra("creatorID");
 
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
+        firebaseDatabase = FirebaseDatabase.getInstance();
 
         final TextView titleTextView = findViewById(R.id.occ_editTitle);
         final TextView locationTextView = findViewById(R.id.occ_editLocation);
@@ -126,8 +119,8 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
             }
         });
 
-        final DatabaseReference mDatabaseReferenceEvents = mFirebaseDatabase.getReference().child("Events");
-        final DatabaseReference mDatabaseReferenceJios = mFirebaseDatabase.getReference().child("Jios");
+        final DatabaseReference databaseReferenceEvents = firebaseDatabase.getReference().child("Events");
+        final DatabaseReference databaseReferenceJios = firebaseDatabase.getReference().child("Jios");
 
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -136,7 +129,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                 // find the thing in event, if cannot, find in jio
                 // search thru, if by the end selected = null, do nth
 
-                mDatabaseReferenceEvents.addListenerForSingleValueEvent(new ValueEventListener() {
+                databaseReferenceEvents.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -151,7 +144,8 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                                         && !dateTextView.getText().toString().equals("No Time Selected")
                                         && !timeTextView.getText().toString().equals("No Date Selected");
                                 try {
-                                    validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK).format(Calendar.getInstance().getTime()))
+                                    validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK)
+                                        .format(Calendar.getInstance().getTime()))
                                             .compareTo(df.parse(dateTextView.getText().toString())) > 0;
                                 } catch (ParseException e) {
                                     e.printStackTrace();
@@ -174,21 +168,16 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                                 } catch (ParseException e) {
                                     e.printStackTrace();
                                 }
-
-//                                EventsItem updatedEventsItem = new EventsItem(occID, creatorID,
-//                                            selected.getDateInfo(),
-//                                            updatedTimeInfo, updatedHourOfDay, updatedMinute,
-//                                            updatedLocationInfo, updatedTitle, updatedDescription);
-
-                                // Toast.makeText(EditOccasionInfoActivity.this, dateTextView.getText(), Toast.LENGTH_SHORT).show();
-                                // mDatabaseReferenceEvents.child(occID).setValue(neww);
                                 if (validDate) {
-                                    Toast.makeText(EditOccasionInfoActivity.this, "Date selected cannot be before current date", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(EditOccasionInfoActivity.this,
+                                        "Date selected cannot be before current date", Toast.LENGTH_LONG).show();
                                 } else if (!factors) {
-                                    Toast.makeText(EditOccasionInfoActivity.this, "Please check all fields and try again", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(EditOccasionInfoActivity.this,
+                                        "Please check all fields and try again", Toast.LENGTH_LONG).show();
                                 } else if (factors && updatedEventsItem != null) {
-                                    mDatabaseReferenceEvents.child(occID).setValue(updatedEventsItem);
-                                    Toast.makeText(EditOccasionInfoActivity.this, "Successfully Changed", Toast.LENGTH_LONG).show();
+                                    databaseReferenceEvents.child(occID).setValue(updatedEventsItem);
+                                    Toast.makeText(EditOccasionInfoActivity.this, "Successfully Changed",
+                                        Toast.LENGTH_LONG).show();
                                     finish();
                                 }
                             }
@@ -201,7 +190,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                     }
                 });
 
-                mDatabaseReferenceJios.addListenerForSingleValueEvent(new ValueEventListener() {
+                databaseReferenceJios.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -216,7 +205,8 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                                         && !dateTextView.getText().toString().equals("No Time Selected")
                                         && !timeTextView.getText().toString().equals("No Date Selected");
                                 try {
-                                    validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK).format(Calendar.getInstance().getTime()))
+                                    validDate = df.parse(DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK)
+                                        .format(Calendar.getInstance().getTime()))
                                             .compareTo(df.parse(dateTextView.getText().toString())) > 0;
                                 } catch (ParseException e) {
                                     e.printStackTrace();
@@ -234,26 +224,21 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                                     updatedJiosItem = new JiosItem(selected.getNumLikes(), occID, creatorID,
                                             df.parse(dateTextView.getText().toString().trim()),
                                             updatedTimeInfo, updatedHourOfDay, updatedMinute,
-                                            updatedLocationInfo, updatedTitle, updatedDescription,updatedCategory);
+                                            updatedLocationInfo, updatedTitle, updatedDescription, updatedCategory);
 
                                 } catch (ParseException e) {
                                     e.printStackTrace();
                                 }
-
-//                                    JiosItem updatedJiosItem = new JiosItem(occID, creatorID,
-//                                            selected.getDateInfo(),
-//                                            updatedTimeInfo, updatedHourOfDay, updatedMinute,
-//                                            updatedLocationInfo, updatedTitle, updatedDescription);
-
-                                // Toast.makeText(EditOccasionInfoActivity.this, dateTextView.getText(), Toast.LENGTH_SHORT).show();
-                                // mDatabaseReferenceEvents.child(occID).setValue(neww);
                                 if (validDate) {
-                                    Toast.makeText(EditOccasionInfoActivity.this, "Date selected cannot be before current date", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(EditOccasionInfoActivity.this,
+                                        "Date selected cannot be before current date", Toast.LENGTH_LONG).show();
                                 } else if (!factors) {
-                                    Toast.makeText(EditOccasionInfoActivity.this, "Please check all fields and try again", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(EditOccasionInfoActivity.this,
+                                        "Please check all fields and try again", Toast.LENGTH_LONG).show();
                                 } else if (factors && updatedJiosItem != null) {
-                                    mDatabaseReferenceJios.child(occID).setValue(updatedJiosItem);
-                                    Toast.makeText(EditOccasionInfoActivity.this, "Successfully Changed", Toast.LENGTH_LONG).show();
+                                    databaseReferenceJios.child(occID).setValue(updatedJiosItem);
+                                    Toast.makeText(EditOccasionInfoActivity.this,
+                                        "Successfully Changed", Toast.LENGTH_LONG).show();
                                     finish();
                                 }
                             }
@@ -272,7 +257,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
         final Runnable myRun = new Runnable() {
             @Override
             public void run() {
-                mDatabaseReferenceEvents.addListenerForSingleValueEvent(new ValueEventListener() {
+                databaseReferenceEvents.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -280,7 +265,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                             String selectedOccID = selected.getEventID();
                             if (selectedOccID.equals(occID)) {
                                 String key = snapshot.getKey();
-                                mDatabaseReferenceEvents.child(key).removeValue();
+                                databaseReferenceEvents.child(key).removeValue();
                                 finish();
                             }
                         }
@@ -292,7 +277,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                     }
                 });
 
-                mDatabaseReferenceJios.addListenerForSingleValueEvent(new ValueEventListener() {
+                databaseReferenceJios.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -300,7 +285,7 @@ public class EditOccasionInfoActivity extends AppCompatActivity implements TimeP
                             String selectedOccID = selected.getJioID();
                             if (selectedOccID.equals(occID)) {
                                 String key = snapshot.getKey();
-                                mDatabaseReferenceJios.child(key).removeValue();
+                                databaseReferenceJios.child(key).removeValue();
                                 finish();
                             }
                         }

@@ -1,35 +1,36 @@
 package com;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.PersistableBundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.RatingBar;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.tryone.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
-import org.w3c.dom.Text;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RatingBar;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class UserProfile extends AppCompatActivity {
+
+    private static final String[] residentials = {"I don't stay on campus",
+        "Cinnamon", "Tembusu", "CAPT", "RC4", "RVRC",
+        "Eusoff", "Kent Ridge", "King Edward VII", "Raffles",
+        "Sheares", "Temasek", "PGP House", "PGP Residences", "UTown Residence",
+        "Select Residence"};
+
     private TextView displayName;
     private TextView residence;
     private ImageView displayPicture;
@@ -39,14 +40,14 @@ public class UserProfile extends AppCompatActivity {
     private TextView telegramHandle;
     private TextView emailAddress;
     private TextView phoneNumber;
-    private TextView IDBox;
+    private TextView idBox;
     private TextView actualRating;
     private ImageView ratingStar;
     private TextView rateThisUser;
     private RatingBar ratingBar;
     private Button reviewButton;
 
-    private StorageReference mProfileStorageRef;
+    private StorageReference profileStorageRef;
 
     private FirebaseDatabase db = FirebaseDatabase.getInstance();
     private String currUserId = MainActivity.getCurrentUser().getId();
@@ -56,17 +57,12 @@ public class UserProfile extends AppCompatActivity {
     private float numOfRatings = 0;
     private float averageRatingGlobal;
 
-    private static final String[] residentials = {"I don't stay on campus",
-            "Cinnamon", "Tembusu", "CAPT", "RC4", "RVRC",
-            "Eusoff", "Kent Ridge", "King Edward VII", "Raffles",
-            "Sheares", "Temasek", "PGP House", "PGP Residences", "UTown Residence",
-            "Select Residence"};
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_profile);
-        mProfileStorageRef = FirebaseStorage.getInstance()
+        profileStorageRef = FirebaseStorage.getInstance()
                 .getReference("profile picture uploads");
         displayName = findViewById(R.id.TextViewDisplayName);
         residence = findViewById(R.id.TextViewResidenceName);
@@ -77,7 +73,7 @@ public class UserProfile extends AppCompatActivity {
         emailAddress = findViewById(R.id.DisplayEmailAddress);
         phoneTitle = findViewById(R.id.DisplayPhoneTitle);
         phoneNumber = findViewById(R.id.DisplayPhoneNumber);
-        IDBox = findViewById(R.id.IDBox);
+        idBox = findViewById(R.id.IDBox);
         actualRating = findViewById(R.id.actual_score);
         ratingStar = findViewById(R.id.rating_star);
         rateThisUser = findViewById(R.id.rate_this_user);
@@ -102,7 +98,7 @@ public class UserProfile extends AppCompatActivity {
         telegramHandle.setText(telegram);
         emailAddress.setText(email);
         phoneNumber.setText(phone.toString());
-        StorageReference mProfileStorageRefIndiv = mProfileStorageRef.child(creatorId);
+        StorageReference mProfileStorageRefIndiv = profileStorageRef.child(creatorId);
         mProfileStorageRefIndiv.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
@@ -117,32 +113,33 @@ public class UserProfile extends AppCompatActivity {
 
 
         //pulling the rating from the database
-        db.getReference().child("Users").child(creatorId).child("Ratings").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot child :dataSnapshot.getChildren()) {
-                        sumOfRatings += Float.parseFloat(child.getValue().toString());
-                        numOfRatings++;
-                        if (child.getKey().equals(currUserId)) {
-                            ratingBar.setRating(Float.parseFloat(child.getValue().toString()));
+        db.getReference().child("Users").child(creatorId).child("Ratings")
+            .addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        for (DataSnapshot child :dataSnapshot.getChildren()) {
+                            sumOfRatings += Float.parseFloat(child.getValue().toString());
+                            numOfRatings++;
+                            if (child.getKey().equals(currUserId)) {
+                                ratingBar.setRating(Float.parseFloat(child.getValue().toString()));
+                            }
                         }
                     }
+                    float averageRating = sumOfRatings / numOfRatings;
+                    averageRatingGlobal = averageRating;
+                    if (numOfRatings == 0) {
+                        actualRating.setText("No ratings yet!");
+                    } else {
+                        actualRating.setText(String.format("%.1f", averageRating));
+                    }
                 }
-                float averageRating = sumOfRatings / numOfRatings;
-                averageRatingGlobal = averageRating;
-                if (numOfRatings == 0) {
-                    actualRating.setText("No ratings yet!");
-                } else {
-                    actualRating.setText(String.format("%.1f", averageRating));
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
                 }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+            });
 
         //when the rating is changed.
         ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {

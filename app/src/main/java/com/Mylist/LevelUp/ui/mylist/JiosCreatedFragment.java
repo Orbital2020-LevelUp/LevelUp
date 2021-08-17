@@ -1,18 +1,9 @@
 package com.Mylist.LevelUp.ui.mylist;
 
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.Events.LevelUp.ui.events.EventsItem;
 import com.Jios.LevelUp.ui.jios.JiosItem;
 import com.example.LevelUp.ui.Occasion;
 import com.example.tryone.R;
@@ -23,37 +14,45 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class JiosCreatedFragment extends Fragment {
-    private RecyclerView mRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
-    private MylistCreatedAdapter mAdapter;
+    private RecyclerView recyclerView;
+    private RecyclerView.LayoutManager layoutManager;
+    private MylistCreatedAdapter adapter;
     private View rootView;
-    private ArrayList<Occasion> mOccasionJios = new ArrayList<>();
+    private ArrayList<Occasion> occasionJios = new ArrayList<>();
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.occ_mylist_fragment_plain, container, false);
 
-        FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
-        final String fbUIDFinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference mDatabaseReferenceJios = mFirebaseDatabase.getReference().child("Jios");
-        mDatabaseReferenceJios.addValueEventListener(new ValueEventListener() {
+        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+        final String fbUidFinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference databaseReferenceJios = firebaseDatabase.getReference().child("Jios");
+        databaseReferenceJios.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                mOccasionJios.clear();
+                occasionJios.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     JiosItem selected = snapshot.getValue(JiosItem.class);
                     String creatorID = selected.getCreatorID();
-                    if (creatorID.equals(fbUIDFinal)) {
+                    if (creatorID.equals(fbUidFinal)) {
                         if (selected.getTimeInfo().length() > 4) {
                             continue;
                         }
 
-                        int hour = Integer.parseInt(selected.getTimeInfo().substring(0,2));
+                        int hour = Integer.parseInt(selected.getTimeInfo().substring(0, 2));
                         int min = Integer.parseInt(selected.getTimeInfo().substring(2));
 
                         Date eventDateZero = selected.getDateInfo();
@@ -66,13 +65,13 @@ public class JiosCreatedFragment extends Fragment {
                         Date currentDate = new Date();
 
                         if (eventDate.compareTo(currentDate) >= 0) {
-                            mOccasionJios.add(selected);
+                            occasionJios.add(selected);
                         }
                     }
                 }
-                MylistCreatedAdapter mylistCreatedAdapter = new MylistCreatedAdapter(getActivity(), mOccasionJios);
-                mAdapter = mylistCreatedAdapter;
-                mRecyclerView.setAdapter(mAdapter);
+                MylistCreatedAdapter mylistCreatedAdapter = new MylistCreatedAdapter(getActivity(), occasionJios);
+                adapter = mylistCreatedAdapter;
+                recyclerView.setAdapter(adapter);
             }
 
             @Override
@@ -89,11 +88,11 @@ public class JiosCreatedFragment extends Fragment {
      * Builds the recycler view to display the list of items
      */
     public void buildRecyclerView() {
-        mRecyclerView = rootView.findViewById(R.id.occMylistFragmentRecyclerView);
-        mLayoutManager = new LinearLayoutManager(getContext());
-        mAdapter = new MylistCreatedAdapter(getActivity(), mOccasionJios);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView = rootView.findViewById(R.id.occMylistFragmentRecyclerView);
+        layoutManager = new LinearLayoutManager(getContext());
+        adapter = new MylistCreatedAdapter(getActivity(), occasionJios);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
     }
 }

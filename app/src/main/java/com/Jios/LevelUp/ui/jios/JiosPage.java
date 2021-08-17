@@ -102,7 +102,7 @@ public class JiosPage extends AppCompatActivity {
         final ArrayList<Integer> numLikesArrLi = new ArrayList<>(Arrays.asList(numLikes));
         final String jioID = intent.getStringExtra("jioID");
         position = intent.getIntExtra("position", 0);
-        final String userID = MainActivity.currUser.getId();
+        final String userID = MainActivity.getCurrUser().getId();
 
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -203,7 +203,7 @@ public class JiosPage extends AppCompatActivity {
 
                         }
                     });
-                    MainActivity.mJioIDs.remove(jioID);
+                    MainActivity.getJioIds().remove(jioID);
                 }
             }
         });
@@ -265,7 +265,7 @@ public class JiosPage extends AppCompatActivity {
                     numLikesArrLi.set(0, currLikes - 1);
                     numLikesView.setText(Integer.toString(currLikes - 1)); // for display only
 
-                    MainActivity.mLikeJioIDs.remove(jioID);
+                    MainActivity.getLikeJioIDs().remove(jioID);
                 }
             }
         });

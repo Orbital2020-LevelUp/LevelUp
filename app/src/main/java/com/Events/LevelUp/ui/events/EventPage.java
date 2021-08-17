@@ -104,7 +104,7 @@ public class EventPage extends AppCompatActivity {
         final ArrayList<Integer> numLikesArrLi = new ArrayList<>(Arrays.asList(numLikes));
         final String eventID = intent.getStringExtra("eventID");
         position = intent.getIntExtra("position", 0);
-        final String userID = MainActivity.currUser.getId();
+        final String userID = MainActivity.getCurrUser().getId();
 
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -206,7 +206,7 @@ public class EventPage extends AppCompatActivity {
                         }
                     });
 
-                    MainActivity.mEventIDs.remove(eventID);
+                    MainActivity.getEventIDs().remove(eventID);
                 }
             }
         });
@@ -270,7 +270,7 @@ public class EventPage extends AppCompatActivity {
                     numLikesArrLi.set(0, currLikes - 1);
                     numLikesView.setText(Integer.toString(currLikes - 1)); // for display only
 
-                    MainActivity.mLikeEventIDs.remove(eventID);
+                    MainActivity.getLikeEventIDs().remove(eventID);
                 }
             }
         });

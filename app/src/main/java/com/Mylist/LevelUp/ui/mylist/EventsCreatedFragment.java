@@ -1,16 +1,8 @@
 package com.Mylist.LevelUp.ui.mylist;
 
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import com.Events.LevelUp.ui.events.EventsItem;
 import com.example.LevelUp.ui.Occasion;
@@ -22,9 +14,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class EventsCreatedFragment extends Fragment {
     private RecyclerView mRecyclerView;
@@ -34,11 +33,12 @@ public class EventsCreatedFragment extends Fragment {
     private ArrayList<Occasion> mOccasionEvents = new ArrayList<>();
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.occ_mylist_fragment_plain, container, false);
 
         FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
-        final String fbUIDFinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        final String fbUidFinal = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference mDatabaseReferenceEvents = mFirebaseDatabase.getReference().child("Events");
         mDatabaseReferenceEvents.addValueEventListener(new ValueEventListener() {
             @Override
@@ -47,12 +47,12 @@ public class EventsCreatedFragment extends Fragment {
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     EventsItem selected = snapshot.getValue(EventsItem.class);
                     String creatorID = selected.getCreatorID();
-                    if (creatorID.equals(fbUIDFinal)) {
+                    if (creatorID.equals(fbUidFinal)) {
                         if (selected.getTimeInfo().length() > 4) {
                             continue;
                         }
 
-                        int hour = Integer.parseInt(selected.getTimeInfo().substring(0,2));
+                        int hour = Integer.parseInt(selected.getTimeInfo().substring(0, 2));
                         int min = Integer.parseInt(selected.getTimeInfo().substring(2));
 
                         Date eventDateZero = selected.getDateInfo();

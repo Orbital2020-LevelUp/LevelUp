@@ -199,19 +199,49 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
         }
     } // static class EventsViewHolder ends here
 
-    //Constructor for EventsAdapter class. This ArrayList contains the
-    //complete list of items that we want to add to the View.
+    private Filter eventsFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<EventsItem> filteredList = new ArrayList<>(); // initially empty list
+
+            if (constraint == null || constraint.length() == 0) { // search input field empty
+                filteredList.addAll(eventsListFull); // to show everything
+            } else {
+                String userSearchInput = constraint.toString().toLowerCase().trim();
+
+                for (EventsItem item : eventsListFull) {
+                    // contains can be changed to StartsWith
+                    if (item.getTitle().toLowerCase().contains(userSearchInput)) {
+                        filteredList.add(item);
+                    }
+                }
+            }
+
+            FilterResults results = new FilterResults();
+            results.values = filteredList;
+            return results;
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            eventsList.clear();
+            eventsList.addAll((List) results.values); // data list contains filtered items
+            notifyDataSetChanged(); // tell adapter list has changed
+        }
+    };
+
 
     /**
      * Constructor for EventsAdapter class
      *
      * @param context Context of the Fragment which will contain the adapter
-     * @param EventsList Contains the complete list of items that are added to the view
+     * @param eventsList Contains the complete list of items that are added to the view
      */
-    public EventsAdapter(FragmentActivity context, ArrayList<EventsItem> EventsList) {
-        eventsList = EventsList;
+    public EventsAdapter(FragmentActivity context, ArrayList<EventsItem> eventsList) {
+        this.eventsList = eventsList;
         eventsContext = context;
-        eventsListFull = new ArrayList<>(EventsList);
+        eventsListFull = new ArrayList<>(eventsList);
         profileStorageRef = FirebaseStorage.getInstance()
                 .getReference("profile picture uploads");
         firebaseDatabase = FirebaseDatabase.getInstance();
@@ -292,7 +322,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
         // if currentItem is contained in Main's Event List, then addButton set state
         final String eventID = currentItem.getEventID();
         eventsHolder.setEventID(eventID);
-        if (MainActivity.mEventIDs.contains(eventID)) {
+        if (MainActivity.getEventIDs().contains(eventID)) {
             eventsHolder.addButton.setBackgroundResource(R.drawable.ic_done_black_24dp);
             eventsHolder.setChecked(true);
             eventsHolder.addButton.setChecked(true);
@@ -316,7 +346,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
                     //MylistFragment.setNumberEvents(index);
 
                     // add to ActivityEvent firebase
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     String eventID = ei.getEventID();
                     String userID = user.getId();
                     DatabaseReference activityEventRef = firebaseDatabase.getReference("ActivityEvent");
@@ -332,7 +362,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
 
                     // delete the entry from activity DB
                     EventsItem ei = eventsList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String eventID = ei.getEventID();
                     final String userID = user.getId();
                     final DatabaseReference activityEventRef = firebaseDatabase.getReference("ActivityEvent");
@@ -356,12 +386,12 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
                         }
                     });
 
-                    MainActivity.mEventIDs.remove(eventID);
+                    MainActivity.getEventIDs().remove(eventID);
                 }
             }
         });
 
-        if (MainActivity.mLikeEventIDs.contains(eventID)) {
+        if (MainActivity.getLikeEventIDs().contains(eventID)) {
             eventsHolder.likeButton.setBackgroundResource(R.drawable.ic_favorite_red_24dp);
             eventsHolder.setLiked(true);
             eventsHolder.likeButton.setChecked(true);
@@ -382,7 +412,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
 
                     // send to LikeDatabase
                     EventsItem ei = eventsList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String eventID = ei.getEventID();
                     final String userID = user.getId();
                     DatabaseReference likeEventRef = firebaseDatabase.getReference("LikeEvent");
@@ -405,7 +435,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
 
                     // Delete the entry from LikeDatabse
                     EventsItem ei = eventsList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String eventID = ei.getEventID();
                     final String userID = user.getId();
                     final DatabaseReference likeEventRef = firebaseDatabase.getReference("LikeEvent");
@@ -438,7 +468,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
                     // for display only
                     eventsHolder.numLikesView.setText(Integer.toString(currLikes - 1));
 
-                    MainActivity.mLikeEventIDs.remove(eventID);
+                    MainActivity.getLikeEventIDs().remove(eventID);
                 }
 
             }
@@ -457,37 +487,6 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
         return eventsFilter;
     }
 
-    private Filter eventsFilter = new Filter() {
-        @Override
-        protected FilterResults performFiltering(CharSequence constraint) {
-            List<EventsItem> filteredList = new ArrayList<>(); // initially empty list
-
-            if (constraint == null || constraint.length() == 0) { // search input field empty
-                filteredList.addAll(eventsListFull); // to show everything
-            } else {
-                String userSearchInput = constraint.toString().toLowerCase().trim();
-
-                for (EventsItem item : eventsListFull) {
-                    // contains can be changed to StartsWith
-                    if (item.getTitle().toLowerCase().contains(userSearchInput)) {
-                        filteredList.add(item);
-                    }
-                }
-            }
-
-            FilterResults results = new FilterResults();
-            results.values = filteredList;
-            return results;
-        }
-
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        @Override
-        protected void publishResults(CharSequence constraint, FilterResults results) {
-            eventsList.clear();
-            eventsList.addAll((List) results.values); // data list contains filtered items
-            notifyDataSetChanged(); // tell adapter list has changed
-        }
-    };
 
     public void resetAdapter() {
         this.eventsList = eventsListFull;

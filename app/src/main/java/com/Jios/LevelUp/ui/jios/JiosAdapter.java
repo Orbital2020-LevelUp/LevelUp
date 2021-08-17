@@ -315,7 +315,7 @@ public class JiosAdapter extends RecyclerView.Adapter<JiosAdapter.JiosViewHolder
 
         final String jioID = currentItem.getJioID();
         jiosViewHolder.setJioID(jioID);
-        if (MainActivity.mJioIDs.contains(jioID)) {
+        if (MainActivity.getJioIds().contains(jioID)) {
             jiosViewHolder.addButton.setBackgroundResource(R.drawable.ic_done_black_24dp);
             jiosViewHolder.setChecked(true);
             jiosViewHolder.addButton.setChecked(true);
@@ -339,7 +339,7 @@ public class JiosAdapter extends RecyclerView.Adapter<JiosAdapter.JiosViewHolder
                     //MylistFragment.setNumberEvents(index);
 
                     // add to ActivityEvent firebase
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     String eventID = jiosItem.getJioID();
                     String userID = user.getId();
                     DatabaseReference activityJioRef = firebaseDatabase.getReference("ActivityJio");
@@ -354,7 +354,7 @@ public class JiosAdapter extends RecyclerView.Adapter<JiosAdapter.JiosViewHolder
 
                     // delete the entry from activity DB
                     JiosItem jiosItem = jiosList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String jioID = jiosItem.getJioID();
                     final String userID = user.getId();
                     final DatabaseReference activityJioRef = firebaseDatabase.getReference("ActivityJio");
@@ -377,12 +377,12 @@ public class JiosAdapter extends RecyclerView.Adapter<JiosAdapter.JiosViewHolder
 
                         }
                     });
-                    MainActivity.mJioIDs.remove(jioID);
+                    MainActivity.getJioIds().remove(jioID);
                 }
             }
         });
 
-        if (MainActivity.mLikeJioIDs.contains(jioID)) {
+        if (MainActivity.getLikeJioIDs().contains(jioID)) {
             jiosViewHolder.likeButton.setBackgroundResource(R.drawable.ic_favorite_red_24dp);
             jiosViewHolder.setLiked(true);
             jiosViewHolder.likeButton.setChecked(true);
@@ -403,7 +403,7 @@ public class JiosAdapter extends RecyclerView.Adapter<JiosAdapter.JiosViewHolder
 
                     // send to LikeDatabase
                     JiosItem jiosItem = jiosList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String eventID = jiosItem.getJioID();
                     final String userID = user.getId();
                     DatabaseReference likeJioRef = firebaseDatabase.getReference("LikeJio");
@@ -425,7 +425,7 @@ public class JiosAdapter extends RecyclerView.Adapter<JiosAdapter.JiosViewHolder
 
                     // Delete the entry from LikeDatabse
                     JiosItem jiosItem = jiosList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String eventID = jiosItem.getJioID();
                     final String userID = user.getId();
                     final DatabaseReference likeJioRef = firebaseDatabase.getReference("LikeJio");
@@ -458,7 +458,7 @@ public class JiosAdapter extends RecyclerView.Adapter<JiosAdapter.JiosViewHolder
                     // for display only
                     jiosViewHolder.numLikesView.setText(Integer.toString(currLikes - 1));
 
-                    MainActivity.mLikeJioIDs.remove(jioID);
+                    MainActivity.getLikeJioIDs().remove(jioID);
                 }
             }
         });

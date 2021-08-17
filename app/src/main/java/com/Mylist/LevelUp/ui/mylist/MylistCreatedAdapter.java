@@ -1,21 +1,10 @@
 package com.Mylist.LevelUp.ui.mylist;
 
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.Events.LevelUp.ui.events.EventPage;
-import com.Jios.LevelUp.ui.jios.JiosPage;
 import com.MainActivity;
 import com.UserItem;
 import com.UserProfile;
@@ -32,14 +21,21 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class MylistCreatedAdapter extends RecyclerView.Adapter<MylistCreatedAdapter.MylistCreatedViewHolder> {
     private ArrayList<Occasion> mylistList;
-    private MylistCreatedAdapter.OnItemClickListener mListener;
+    private MylistCreatedAdapter.OnItemClickListener mylistListener;
     private DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK);
     private DateFormat df2 = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK);
 
@@ -71,7 +67,7 @@ public class MylistCreatedAdapter extends RecyclerView.Adapter<MylistCreatedAdap
     }
 
     public void setOnItemClickListener(MylistCreatedAdapter.OnItemClickListener listener) {
-        mListener = listener;
+        mylistListener = listener;
     }
 
     public static class MylistCreatedViewHolder extends RecyclerView.ViewHolder {
@@ -222,14 +218,14 @@ public class MylistCreatedAdapter extends RecyclerView.Adapter<MylistCreatedAdap
         View v = LayoutInflater.from(parent.getContext())
             .inflate(R.layout.occ_item_editmode, parent, false);
         MylistCreatedAdapter.MylistCreatedViewHolder evh = new MylistCreatedAdapter
-            .MylistCreatedViewHolder(fragContext, v, mListener);
+            .MylistCreatedViewHolder(fragContext, v, mylistListener);
         return evh;
     }
 
     @Override
     public void onBindViewHolder(@NonNull MylistCreatedAdapter.MylistCreatedViewHolder holder, final int position) {
         final Occasion currentItem = mylistList.get(position);
-        UserItem user = MainActivity.currUser;
+        UserItem user = MainActivity.getCurrUser();
         final String userID = user.getId();
         final String occID = currentItem.getOccasionID();
         final DatabaseReference activityJioRef = firebaseDatabase.getReference("ActivityJio");

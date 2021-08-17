@@ -26,15 +26,15 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
 
-
-
 public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener,
         DatePickerDialog.OnDateSetListener {
+
+    private static final String[] categories = {
+        "Arts", "Sports", "Talks", "Volunteering", "Food", "Others"};
 
     private FirebaseDatabase database;
     private DatabaseReference databaseReference;
@@ -56,9 +56,6 @@ public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnT
     private boolean dateIsSame;
 
     private Spinner jioSpinner;
-
-    private static final String[] categories = {
-        "Arts", "Sports", "Talks", "Volunteering", "Food", "Others"};
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -101,7 +98,7 @@ public class JiosAdder extends AppCompatActivity implements TimePickerDialog.OnT
             public void onClick(View v) {
                 JiosItem jiosItem = null;
                 String key = databaseReference.push().getKey();
-                String jioCreatorUid = MainActivity.currUser.getId();
+                String jioCreatorUid = MainActivity.getCurrUser().getId();
                 try {
                     jiosItem = new JiosItem(0, key, jioCreatorUid,
                             df.parse((String) dateSelected.getText()), (String) timeSelected.getText(),

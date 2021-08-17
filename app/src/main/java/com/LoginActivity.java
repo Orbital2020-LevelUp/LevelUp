@@ -1,25 +1,7 @@
 package com;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import java.util.Objects;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.provider.MediaStore;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.Spinner;
-import android.widget.Toast;
-
-import com.Mylist.LevelUp.ui.mylist.EditUserInfoActivity;
 import com.example.tryone.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -31,10 +13,30 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.util.Objects;
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.MediaStore;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.Spinner;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     // For Login
+    private static final String[] residentials = {"I don't stay on campus",
+        "Cinnamon", "Tembusu", "CAPT", "RC4", "RVRC",
+        "Eusoff", "Kent Ridge", "King Edward VII", "Raffles",
+        "Sheares", "Temasek", "PGP House", "PGP Residences", "UTown Residence",
+        "Select Residence"};
+
     private static final int PICK_IMAGE_REQUEST = 1;
     private EditText editTextName;
     private EditText telegramBox;
@@ -44,23 +46,14 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
     private String telegramHandle;
     private long phoneNumber;
     private int residence;
-    // private static FirebaseAuth mAuth;
-    // private FirebaseAuth.AuthStateListener mAuthStateListener;
-
-    private FirebaseDatabase mFirebaseDatabase;
-    private DatabaseReference mReferenceUsers;
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference referenceUsers;
 
     private ImageButton setDP;
     private Uri profileImageUri;
     private boolean allowed;
 
-    // eventually add halls
     private Spinner spinner;
-    private static final String[] residentials = {"I don't stay on campus",
-            "Cinnamon", "Tembusu", "CAPT", "RC4", "RVRC",
-            "Eusoff", "Kent Ridge", "King Edward VII", "Raffles",
-            "Sheares", "Temasek", "PGP House", "PGP Residences", "UTown Residence",
-            "Select Residence"};
     private final int listsize = residentials.length - 1;
 
     @Override
@@ -131,7 +124,8 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
 
     private void uploadImageToFireBase() {
         String currUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        StorageReference fileReference = FirebaseStorage.getInstance().getReference("profile picture uploads").child(currUserId);
+        StorageReference fileReference = FirebaseStorage.getInstance().getReference("profile picture uploads")
+            .child(currUserId);
         fileReference.putFile(profileImageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
@@ -144,7 +138,6 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
             }
         });
 
-        // MainActivity.currUser.setProfilePictureUri(profileImageUri.toString());
         MainActivity.setCurrUserProfilePicture(profileImageUri.toString());
         // send update to database
         String newUri = profileImageUri.toString();
@@ -152,12 +145,6 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
                 .child(currUserId)
                 .child("profilePictureUri")
                 .setValue(newUri);
-
-//        UserItem updatedUser = MainActivity.currUser;
-//        FirebaseDatabase.getInstance().getReference("Users")
-//                .child(MainActivity.currUser.getId())
-//                .setValue(updatedUser);
-
     }
 
     private void initializeSpinner() {
@@ -178,55 +165,56 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         switch (position) {
-            case 0:
-                residence = 0; // I dont stay on campus
-                break;
-            case 1:
-                // Toast.makeText(this, "Cinnamon", Toast.LENGTH_SHORT).show();
-                residence = 1;
-                break;
-            case 2:
-                // Toast.makeText(this, "Tembusu", Toast.LENGTH_SHORT).show();
-                residence = 2;
-                break;
-            case 3:
-                // Toast.makeText(this, "CAPT", Toast.LENGTH_SHORT).show();
-                residence = 3;
-                break;
-            case 4:
-                // Toast.makeText(this, "RC4", Toast.LENGTH_SHORT).show();
-                residence = 4;
-                break;
-            case 5:
-                residence = 5; // RVRC
-                break;
-            case 6:
-                residence = 6; // Eusoff
-                break;
-            case 7:
-                residence = 7; // Kent Ridge
-                break;
-            case 8:
-                residence = 8; // KE7
-                break;
-            case 9:
-                residence = 9; // Raffles
-                break;
-            case 10:
-                residence = 10; // Sheares
-                break;
-            case 11:
-                residence = 11; // Temasek
-                break;
-            case 12:
-                residence = 12; // PGP House
-                break;
-            case 13:
-                residence = 13; // PGP Residences
-                break;
-            case 14:
-                residence = 14; // UTown Residence
-                break;
+        case 0:
+            residence = 0; // I dont stay on campus
+            break;
+        case 1:
+            // Toast.makeText(this, "Cinnamon", Toast.LENGTH_SHORT).show();
+            residence = 1;
+            break;
+        case 2:
+            // Toast.makeText(this, "Tembusu", Toast.LENGTH_SHORT).show();
+            residence = 2;
+            break;
+        case 3:
+            // Toast.makeText(this, "CAPT", Toast.LENGTH_SHORT).show();
+            residence = 3;
+            break;
+        case 4:
+            // Toast.makeText(this, "RC4", Toast.LENGTH_SHORT).show();
+            residence = 4;
+            break;
+        case 5:
+            residence = 5; // RVRC
+            break;
+        case 6:
+            residence = 6; // Eusoff
+            break;
+        case 7:
+            residence = 7; // Kent Ridge
+            break;
+        case 8:
+            residence = 8; // KE7
+            break;
+        case 9:
+            residence = 9; // Raffles
+            break;
+        case 10:
+            residence = 10; // Sheares
+            break;
+        case 11:
+            residence = 11; // Temasek
+            break;
+        case 12:
+            residence = 12; // PGP House
+            break;
+        case 13:
+            residence = 13; // PGP Residences
+            break;
+        case 14:
+            residence = 14; // UTown Residence
+            break;
+        default:
 
         }
 
@@ -238,16 +226,12 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
     }
 
     private void initializeFirebase() {
-//        mAuth = FirebaseAuth.getInstance();
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
-        mReferenceUsers = mFirebaseDatabase.getReference("Users");
-//        mReferenceJios = mFirebaseDatabase.getReference().child("Jios");
-//        mReferenceEvents = mFirebaseDatabase.getReference().child("Events");
-//        mReferenceMktplace = mFirebaseDatabase.getReference().child("mktplace uploads");
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        referenceUsers = firebaseDatabase.getReference("Users");
     }
 
     private void registerName() {
-         name = editTextName.getText().toString().trim();
+        name = editTextName.getText().toString().trim();
 
         if (name.isEmpty()) {
             editTextName.setError("Please enter your name");
@@ -281,14 +265,14 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
         // new user(id, email, name) (eventually rc and profile pic)
         String userID = fbUser.getUid();
         String email = fbUser.getEmail();
-        String imageURI = "";
+        String imageUri = "";
 
         // must add the set dp
         if (profileImageUri != null) {
-            imageURI = profileImageUri.toString();
+            imageUri = profileImageUri.toString();
         }
-        UserItem userItem = new UserItem(userID, imageURI, name, email, residence, telegramHandle, phoneNumber, false);
-        mReferenceUsers.child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid())
+        UserItem userItem = new UserItem(userID, imageUri, name, email, residence, telegramHandle, phoneNumber, false);
+        referenceUsers.child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid())
                 .setValue(userItem);
     }
 
@@ -296,7 +280,4 @@ public class LoginActivity extends AppCompatActivity implements AdapterView.OnIt
     public void onBackPressed() {
         Toast.makeText(this, "Please enter your details", Toast.LENGTH_SHORT).show();
     }
-
-
-
 }

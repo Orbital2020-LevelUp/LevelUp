@@ -124,8 +124,7 @@ public class MktplaceLikedAdapter extends RecyclerView.Adapter<MktplaceLikedAdap
         public void setCreatorResidence(int creatorResidence) {
             this.creatorResidence = creatorResidence;
         }
-
-        public void setProfilePictureUri(String profilePictureUri) { 
+        public void setProfilePictureUri(String profilePictureUri) {
             this.profilePictureUri = profilePictureUri;
         }
 
@@ -154,11 +153,11 @@ public class MktplaceLikedAdapter extends RecyclerView.Adapter<MktplaceLikedAdap
      * Constructor for MktplaceLikedAdapter class. This ArrayList contains the complete
      * list of items that are added to the View
      * @param context Context of the fragment
-     * @param MktplaceList List of items
+     * @param mktplaceList List of items
      */
-    public MktplaceLikedAdapter(FragmentActivity context, ArrayList<MktplaceItem> MktplaceList) {
+    public MktplaceLikedAdapter(FragmentActivity context, ArrayList<MktplaceItem> mktplaceList) {
         this.mktplaceContext = context;
-        mktplaceLikedList = MktplaceList;
+        this.mktplaceLikedList = mktplaceList;
         firebaseDatabase = FirebaseDatabase.getInstance();
         userRef = firebaseDatabase.getReference("Users");
     }
@@ -180,7 +179,7 @@ public class MktplaceLikedAdapter extends RecyclerView.Adapter<MktplaceLikedAdap
         MktplaceItem uploadCurrent = mktplaceLikedList.get(position);
         String imageUrl = uploadCurrent.getImageUrl();
         holder.titleView.setText(uploadCurrent.getName());
-        holder.setLiked(MainActivity.mLikeMktplaceIDs.contains(uploadCurrent.getMktPlaceID()));
+        holder.setLiked(MainActivity.getLikeMktplaceIDs().contains(uploadCurrent.getMktPlaceID()));
         holder.description = uploadCurrent.getDescription();
         holder.location = uploadCurrent.getLocation();
         holder.imageUrl = uploadCurrent.getImageUrl();
@@ -227,7 +226,7 @@ public class MktplaceLikedAdapter extends RecyclerView.Adapter<MktplaceLikedAdap
         holder.setNumLikes(uploadCurrent.getNumLikes());
         String mktplaceID = uploadCurrent.getMktPlaceID();
 
-        if (MainActivity.mLikeMktplaceIDs.contains(mktplaceID)) {
+        if (MainActivity.getLikeMktplaceIDs().contains(mktplaceID)) {
             holder.likeButton.setBackgroundResource(R.drawable.ic_favorite_red_24dp);
             holder.setLiked(true);
             holder.likeButton.setChecked(true);
@@ -246,7 +245,7 @@ public class MktplaceLikedAdapter extends RecyclerView.Adapter<MktplaceLikedAdap
 
                     // send to LikeDatabase
                     MktplaceItem item = mktplaceLikedList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String mktplaceID = item.getMktPlaceID();
                     final String userID = user.getId();
                     DatabaseReference likeMktplaceRef = firebaseDatabase.getReference("LikeMktplace");
@@ -269,7 +268,7 @@ public class MktplaceLikedAdapter extends RecyclerView.Adapter<MktplaceLikedAdap
 
                     // Delete the entry from LikeDatabase
                     MktplaceItem item = mktplaceLikedList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String mktplaceID = item.getMktPlaceID();
                     final String userID = user.getId();
                     final DatabaseReference likeMktplaceRef = firebaseDatabase.getReference("LikeMktplace");
@@ -303,7 +302,7 @@ public class MktplaceLikedAdapter extends RecyclerView.Adapter<MktplaceLikedAdap
                     // for display only
                     holder.numLikesView.setText(Integer.toString(currLikes - 1));
 
-                    MainActivity.mLikeMktplaceIDs.remove(mktplaceID);
+                    MainActivity.getLikeMktplaceIDs().remove(mktplaceID);
 
                     mktplaceLikedList.remove(position);
                     notifyItemRemoved(position);

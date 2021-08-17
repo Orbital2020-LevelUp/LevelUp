@@ -155,6 +155,37 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
             this.numLikes = numLikes;
         }
     }
+    private Filter mktplaceFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<MktplaceItem> filteredList = new ArrayList<>(); // initially empty list
+
+            if (constraint == null || constraint.length() == 0) { // search input field empty
+                filteredList.addAll(mktplaceListFull); // to show everything
+            } else {
+                String userSearchInput = constraint.toString().toLowerCase().trim();
+
+                for (MktplaceItem item : mktplaceListFull) {
+                    // contains can be changed to StartsWith
+                    if (item.getName().toLowerCase().contains(userSearchInput)) {
+                        filteredList.add(item);
+                    }
+                }
+            }
+
+            FilterResults results = new FilterResults();
+            results.values = filteredList;
+            return results;
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            mktplaceList.clear();
+            mktplaceList.addAll((List) results.values); // data list contains filtered items
+            notifyDataSetChanged(); // tell adapter list has changed
+        }
+    };
 
     //Constructor for MktplaceAdapter class. This ArrayList contains the
     //complete list of items that we want to add to the View.
@@ -163,12 +194,12 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
      * Constructor for the MktplaceAdapter class.
      *
      * @param context Context that belongs to the Fragment
-     * @param MktplaceList List of items that are added to the View
+     * @param mktplaceList List of items that are added to the View
      */
-    public MktplaceAdapter(FragmentActivity context, ArrayList<MktplaceItem> MktplaceList) {
+    public MktplaceAdapter(FragmentActivity context, ArrayList<MktplaceItem> mktplaceList) {
         this.mktplaceContext = context;
-        mktplaceList = MktplaceList;
-        mktplaceListFull = new ArrayList<>(MktplaceList);
+        this.mktplaceList = mktplaceList;
+        mktplaceListFull = new ArrayList<>(mktplaceList);
         firebaseDatabase = FirebaseDatabase.getInstance();
         userRef = firebaseDatabase.getReference("Users");
     }
@@ -187,7 +218,7 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
         MktplaceItem uploadCurrent = mktplaceList.get(position);
         String imageUrl = uploadCurrent.getImageUrl();
         holder.titleView.setText(uploadCurrent.getName());
-        holder.setLiked(MainActivity.mLikeMktplaceIDs.contains(uploadCurrent.getMktPlaceID()));
+        holder.setLiked(MainActivity.getLikeMktplaceIDs().contains(uploadCurrent.getMktPlaceID()));
         holder.description = uploadCurrent.getDescription();
         holder.location = uploadCurrent.getLocation();
         holder.imageUrl = uploadCurrent.getImageUrl();
@@ -233,7 +264,7 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
         holder.numLikesView.setText(Integer.toString(uploadCurrent.getNumLikes()));
         holder.setNumLikes(uploadCurrent.getNumLikes());
         String mktplaceID = uploadCurrent.getMktPlaceID();
-        if (MainActivity.mLikeMktplaceIDs.contains(mktplaceID)) {
+        if (MainActivity.getLikeMktplaceIDs().contains(mktplaceID)) {
             holder.likeButton.setBackgroundResource(R.drawable.ic_favorite_red_24dp);
             holder.setLiked(true);
             holder.likeButton.setChecked(true);
@@ -252,7 +283,7 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
 
                     // send to LikeDatabase
                     MktplaceItem item = mktplaceList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String mktplaceID = item.getMktPlaceID();
                     final String userID = user.getId();
                     DatabaseReference likeMktplaceRef = firebaseDatabase.getReference("LikeMktplace");
@@ -275,7 +306,7 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
 
                     // Delete the entry from LikeDatabase
                     MktplaceItem item = mktplaceList.get(position);
-                    UserItem user = MainActivity.currUser;
+                    UserItem user = MainActivity.getCurrUser();
                     final String mktplaceID = item.getMktPlaceID();
                     final String userID = user.getId();
                     final DatabaseReference likeMktplaceRef = firebaseDatabase.getReference("LikeMktplace");
@@ -284,7 +315,8 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                 LikeOccasionItem selected = snapshot.getValue(LikeOccasionItem.class);
-                                if (mktplaceID.equals(selected.getOccasionID()) && userID.equals(selected.getUserID())) {
+                                if (mktplaceID.equals(selected.getOccasionID())
+                                    && userID.equals(selected.getUserID())) {
                                     String key = snapshot.getKey();
                                     likeMktplaceRef.child(key).removeValue();
                                     Toast.makeText(mktplaceContext, "Unliked", Toast.LENGTH_SHORT).show();
@@ -308,7 +340,7 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
                     // for display only
                     holder.numLikesView.setText(Integer.toString(currLikes - 1));
 
-                    MainActivity.mLikeMktplaceIDs.remove(mktplaceID);
+                    MainActivity.getLikeMktplaceIDs().remove(mktplaceID);
 
                 }
             }
@@ -326,37 +358,6 @@ public class MktplaceAdapter extends RecyclerView.Adapter<MktplaceAdapter.Mktpla
         return mktplaceFilter;
     }
 
-    private Filter mktplaceFilter = new Filter() {
-        @Override
-        protected FilterResults performFiltering(CharSequence constraint) {
-            List<MktplaceItem> filteredList = new ArrayList<>(); // initially empty list
-
-            if (constraint == null || constraint.length() == 0) { // search input field empty
-                filteredList.addAll(mktplaceListFull); // to show everything
-            } else {
-                String userSearchInput = constraint.toString().toLowerCase().trim();
-
-                for (MktplaceItem item : mktplaceListFull) {
-                    // contains can be changed to StartsWith
-                    if (item.getName().toLowerCase().contains(userSearchInput)) {
-                        filteredList.add(item);
-                    }
-                }
-            }
-
-            FilterResults results = new FilterResults();
-            results.values = filteredList;
-            return results;
-        }
-
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        @Override
-        protected void publishResults(CharSequence constraint, FilterResults results) {
-            mktplaceList.clear();
-            mktplaceList.addAll((List) results.values); // data list contains filtered items
-            notifyDataSetChanged(); // tell adapter list has changed
-        }
-    };
 
     public void resetAdapter() {
         this.mktplaceList = mktplaceListFull;
